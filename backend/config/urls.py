@@ -1,9 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
 from django.http import HttpResponse
+from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('healthz', lambda r: HttpResponse('ok')),
-    path('api/', include('core.urls')),
+    path("admin/", admin.site.urls),
+    path("healthz", lambda r: HttpResponse("ok")),
+    path("", include("core.urls")),
 ]

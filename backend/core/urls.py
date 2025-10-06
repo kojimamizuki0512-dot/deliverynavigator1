@@ -1,8 +1,10 @@
 from django.urls import path
-from .views import heatmap_data, daily_route, upload_screenshot
+from . import views
 
 urlpatterns = [
-    path('heatmap-data/', heatmap_data, name='heatmap-data'),
-    path('daily-route/', daily_route, name='daily-route'),
-    path('upload-screenshot/', upload_screenshot, name='upload-screenshot'),
+    path("api/heatmap-data/", views.heatmap_data, name="heatmap-data"),
+    path("api/daily-route/", views.daily_route, name="daily-route"),
+    path("api/daily-summary/", views.daily_summary, name="daily-summary"),
+    path("api/weekly-forecast/", views.weekly_forecast, name="weekly-forecast"),
+    path("api/upload-screenshot/", views.upload_screenshot, name="upload-screenshot"),
 ]
