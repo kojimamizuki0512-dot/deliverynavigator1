@@ -8,10 +8,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
 
-# ------ ダミーAPI（公開エンドポイント / 認証不要） ------
+# ====== ダミーAPI（すべて公開：認証不要） ======
 
 @api_view(["GET"])
-@permission_classes([AllowAny])  # ← 403対策：誰でもGETできる
+@permission_classes([AllowAny])
 def heatmap_data(request):
     data = [
         {"lat": 35.6585, "lng": 139.7013, "intensity": 0.85,
@@ -31,10 +31,9 @@ def heatmap_data(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])  # ← 403対策：誰でもGETできる
-@csrf_exempt  # 念のため（POST化した時でも弾かれないように）
+@permission_classes([AllowAny])
+@csrf_exempt
 def daily_route(request):
-    # ?area=渋谷エリア などを受け取ってもOK（未使用なら既定値）
     area = request.GET.get("area", "渋谷エリア")
     payload = {
         "recommended_area": area,
@@ -65,7 +64,6 @@ def daily_summary(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def weekly_forecast(request):
-    # 表示用のダミー
     days = [
         {"day": "Mon", "weather": "cloudy", "level": 2},
         {"day": "Tue", "weather": "sunny", "level": 3},
@@ -78,20 +76,13 @@ def weekly_forecast(request):
     return JsonResponse(days, safe=False)
 
 
-# ------ 参考：スクショアップロード（今はダミー動作） ------
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @csrf_exempt
 def upload_screenshot(request):
-    """
-    file: multipart/form-data のフィールド名 'file'
-    """
     f = request.FILES.get("file")
     if not f:
         return JsonResponse({"ok": False, "error": "ファイルがありません"}, status=400)
-
-    # ここでは読み込みテストのみ（実際のOCRは後で差し替え）
     try:
         img = Image.open(BytesIO(f.read()))
         w, h = img.size
