@@ -1,45 +1,43 @@
-from __future__ import annotations
-from typing import Any, Dict, List
 from io import BytesIO
+from PIL import Image
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from PIL import Image
-import pytesseract
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 
-# ============ 共通ヘルパ ============
+# ------ ダミーAPI（公開エンドポイント / 認証不要） ------
 
-def ok(data: Any, status: int = 200) -> JsonResponse:
-    """日本語をそのまま返す & 配列もOKにする"""
-    return JsonResponse(
-        data,
-        status=status,
-        safe=False,
-        json_dumps_params={"ensure_ascii": False, "indent": 2},
-    )
-
-
-# ============ 1) ヒートマップ ============
-
+@api_view(["GET"])
+@permission_classes([AllowAny])  # ← 403対策：誰でもGETできる
 def heatmap_data(request):
-    """緯度・経度・強度・人気店のリスト（ダミー）"""
-    points: List[Dict[str, Any]] = [
-        {"lat": 35.6585, "lng": 139.7013, "intensity": 0.85, "restaurants": ["A飯店", "Bカフェ", "Cバーガー"]},
-        {"lat": 35.6610, "lng": 139.7038, "intensity": 0.68, "restaurants": ["Dラーメン", "Eピザ"]},
-        {"lat": 35.6555, "lng": 139.6990, "intensity": 0.48, "restaurants": ["Fストア"]},
-        {"lat": 35.6626, "lng": 139.6998, "intensity": 0.72, "restaurants": ["G寿司", "Hカレー"]},
-        {"lat": 35.6604, "lng": 139.7065, "intensity": 0.56, "restaurants": ["I定食", "Jタコス"]},
-        {"lat": 35.6539, "lng": 139.7051, "intensity": 0.40, "restaurants": ["K丼", "Lうどん"]},
+    data = [
+        {"lat": 35.6585, "lng": 139.7013, "intensity": 0.85,
+         "restaurants": ["A飯店", "Bカフェ", "Cバーガー"]},
+        {"lat": 35.6610, "lng": 139.7038, "intensity": 0.68,
+         "restaurants": ["Dラーメン", "Eピザ"]},
+        {"lat": 35.6555, "lng": 139.6990, "intensity": 0.48,
+         "restaurants": ["Fストア"]},
+        {"lat": 35.6592, "lng": 139.7001, "intensity": 0.75,
+         "restaurants": ["G丼", "Hカレー"]},
+        {"lat": 35.6570, "lng": 139.7055, "intensity": 0.62,
+         "restaurants": ["I寿司", "Jそば"]},
+        {"lat": 35.6542, "lng": 139.7030, "intensity": 0.55,
+         "restaurants": ["K中華"]},
     ]
-    return ok(points)
+    return JsonResponse(data, safe=False)
 
 
-# ============ 2) AIルート提案 ============
-
+@api_view(["GET"])
+@permission_classes([AllowAny])  # ← 403対策：誰でもGETできる
+@csrf_exempt  # 念のため（POST化した時でも弾かれないように）
 def daily_route(request):
-    data = {
-        "recommended_area": "渋谷エリア",
+    # ?area=渋谷エリア などを受け取ってもOK（未使用なら既定値）
+    area = request.GET.get("area", "渋谷エリア")
+    payload = {
+        "recommended_area": area,
         "predicted_income": 18500,
         "timeline": [
             {"time": "12:00-12:30", "action": "渋谷ストリーム周辺で待機"},
@@ -48,101 +46,59 @@ def daily_route(request):
             {"time": "13:30-14:00", "action": "南平台〜代官山の回遊。大通りは避けて裏路地重視"},
         ],
     }
-    return ok(data)
+    return JsonResponse(payload, safe=False)
 
 
-# ============ 3) 実績サマリー ============
-
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def daily_summary(request):
-    data = {
-        "total_revenue": 12540,
-        "orders": 9,
-        "avg_hourly_wage": 1650,
-        "worked_minutes": 270,
-        "goal_amount": 18000,
-        "progress_to_goal": 12540 / 18000,
-        "current_hourly_wage": 1780,
-        "streak_minutes": 95,
-        "badges_unlocked": ["ランチピークハンター", "回遊職人"],
+    summary = {
+        "total_sales": 12540,
+        "orders": 18,
+        "avg_wage": 1650,
+        "worked_minutes": 95,
+        "badges": ["ランチ帯マスター", "雨の日の勇者"],
     }
-    return ok(data)
+    return JsonResponse(summary, safe=False)
 
 
-# ============ 4) 週間予測 ============
-
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def weekly_forecast(request):
+    # 表示用のダミー
     days = [
-        {"day": "Mon", "weather": "晴れ", "demand": "med", "note": "夕方に少し上がる"},
-        {"day": "Tue", "weather": "曇り", "demand": "low", "note": "夜は雨待ちの可能性"},
-        {"day": "Wed", "weather": "小雨", "demand": "high", "note": "雨バフで案件増"},
-        {"day": "Thu", "weather": "晴れ", "demand": "med", "note": "ランチ集中"},
-        {"day": "Fri", "weather": "晴れ", "demand": "med", "note": "夜の伸びに期待"},
-        {"day": "Sat", "weather": "雨", "demand": "high", "note": "防水装備で攻め"},
-        {"day": "Sun", "weather": "曇り", "demand": "med", "note": "昼〜夕が狙い目"},
+        {"day": "Mon", "weather": "cloudy", "level": 2},
+        {"day": "Tue", "weather": "sunny", "level": 3},
+        {"day": "Wed", "weather": "rain", "level": 4},
+        {"day": "Thu", "weather": "sunny", "level": 3},
+        {"day": "Fri", "weather": "cloudy", "level": 2},
+        {"day": "Sat", "weather": "sunny", "level": 4},
+        {"day": "Sun", "weather": "rain", "level": 5},
     ]
-    return ok(days)
+    return JsonResponse(days, safe=False)
 
 
-# ============ 5) 画像アップロード（OCR器の“形”） ============
+# ------ 参考：スクショアップロード（今はダミー動作） ------
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
 @csrf_exempt
 def upload_screenshot(request):
-    if request.method != "POST":
-        return ok({"ok": False, "error": "POST で送ってください。"}, status=405)
-
+    """
+    file: multipart/form-data のフィールド名 'file'
+    """
     f = request.FILES.get("file")
     if not f:
-        return ok({"ok": False, "error": "file が見つかりません。"}, status=400)
+        return JsonResponse({"ok": False, "error": "ファイルがありません"}, status=400)
 
+    # ここでは読み込みテストのみ（実際のOCRは後で差し替え）
     try:
         img = Image.open(BytesIO(f.read()))
-        try:
-            text = pytesseract.image_to_string(img, lang="jpn+eng")
-        except Exception:
-            text = ""
-        record = {
-            "amount": _extract_amount(text) or "不明",
-            "time": _extract_time(text) or "不明",
-            "restaurant": _extract_name(text) or "不明",
-            "area": _extract_area(text) or "不明",
-            "distance_km": _extract_distance(text) or "不明",
-            "boost": _extract_boost(text) or "不明",
-        }
-        return ok({"ok": True, "record": record})
+        w, h = img.size
+        return JsonResponse({
+            "ok": True,
+            "meta": {"width": w, "height": h},
+            "parsed": {"amount": "不明", "time": "不明", "shop": "不明"},
+        })
     except Exception as e:
-        return ok({"ok": False, "error": f"読み取りに失敗: {e}"} , status=400)
-
-
-# ---- 超簡易パターン抽出 ----
-def _extract_amount(text: str):
-    import re
-    m = re.search(r"(\d{3,5})\s*円", text)
-    return m.group(1) if m else None
-
-def _extract_time(text: str):
-    import re
-    m = re.search(r"(\d{1,2}:\d{2})", text)
-    return m.group(1) if m else None
-
-def _extract_name(text: str):
-    for line in text.splitlines():
-        line = line.strip()
-        if 2 <= len(line) <= 12 and any(ch.isalpha() or "\u3040" <= ch <= "\u30FF" for ch in line):
-            return line
-    return None
-
-def _extract_area(text: str):
-    for key in ["渋谷", "新宿", "恵比寿", "代官山", "中目黒", "六本木"]:
-        if key in text:
-            return key + "周辺"
-    return None
-
-def _extract_distance(text: str):
-    import re
-    m = re.search(r"(\d+(?:\.\d+)?)\s*km", text, flags=re.I)
-    return m.group(1) if m else None
-
-def _extract_boost(text: str):
-    import re
-    m = re.search(r"(\d+(?:\.\d+)?)\s*倍", text)
-    return m.group(1) if m else None
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)

@@ -1,57 +1,26 @@
-import React, { useMemo } from 'react'
-import { NavLink, Routes, Route, useLocation } from 'react-router-dom'
-import HomePage from './pages/HomePage.jsx'
-import UploadPage from './pages/UploadPage.jsx'
-
-// 本番は VITE_API_BASE、開発は Vite proxy
-const apiBase = import.meta.env.PROD ? (import.meta.env.VITE_API_BASE || '') : ''
+import { Outlet, NavLink, useLocation } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import CockpitBar from "./components/CockpitBar";
 
 export default function App() {
-  const { pathname } = useLocation()
-
-  const header = useMemo(() => (
-    <header className="sticky top-0 z-50 border-b border-line glass">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-brand grid place-items-center font-extrabold text-black">DN</div>
-          <div className="font-bold tracking-wide">Delivery Navigator</div>
-        </div>
-        <nav className="hidden sm:flex items-center gap-2">
-          <NavLink
-            to="/"
-            className={({isActive}) =>
-              `px-3 py-1.5 rounded-full border text-sm ${isActive ? 'border-brand text-brand' : 'border-line hover:border-brand hover:text-brand'}`
-            }
-            end
-          >ホーム</NavLink>
-
-          <NavLink
-            to="/upload"
-            className={({isActive}) =>
-              `px-3 py-1.5 rounded-full border text-sm ${isActive ? 'border-brand text-brand' : 'border-line hover:border-brand hover:text-brand'}`
-            }
-          >読み込み</NavLink>
-
-          <a className="px-3 py-1.5 rounded-full border border-line text-sm hover:border-brand hover:text-brand">記録</a>
-        </nav>
-      </div>
-    </header>
-  ), [])
-
+  const { pathname } = useLocation();
   return (
-    <div className="min-h-screen">
-      {header}
+    <div className="min-h-screen bg-app text-app-fore">
+      <NavBar />
+      <CockpitBar />
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+        <Outlet />
+      </main>
 
-      <Routes>
-        <Route path="/" element={<HomePage apiBase={apiBase} />} />
-        <Route path="/upload" element={<UploadPage apiBase={apiBase} />} />
-      </Routes>
-
-      <footer className="border-t border-line mt-8">
-        <div className="max-w-6xl mx-auto px-4 py-6 text-mute text-sm">
-          © {new Date().getFullYear()} Delivery Navigator
+      {/* フッターの簡易ナビ */}
+      <footer className="max-w-7xl mx-auto px-4 md:px-8 py-8 text-sm text-app-muted">
+        <div className="flex gap-4">
+          <NavLink className={({isActive}) => isActive ? "text-brand" : ""} to="/">ホーム</NavLink>
+          <NavLink className={({isActive}) => isActive ? "text-brand" : ""} to="/upload">読み込み</NavLink>
+          <NavLink className={({isActive}) => isActive ? "text-brand" : ""} to="/records">記録</NavLink>
         </div>
+        <div className="mt-2 opacity-60">現在: {pathname}</div>
       </footer>
     </div>
-  )
+  );
 }

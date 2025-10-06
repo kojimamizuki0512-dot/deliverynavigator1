@@ -2,5 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-.card { @apply bg-card border border-line rounded-2xl p-5 shadow-lg; }
-.glass { backdrop-filter: saturate(1.2) blur(10px); background: color-mix(in oklab, #141821 75%, transparent); }
+/* レイアウトのベース */
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+/* スクロールスナップで“カードデッキ”を実現 */
+.deck {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.deck > * {
+  scroll-snap-align: center;
+}
+
+/* スクロールバー控えめ */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb { background: #2b3342; border-radius: 8px; }
